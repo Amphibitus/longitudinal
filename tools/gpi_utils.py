@@ -214,6 +214,36 @@ def getLength(layer):
         totalLen = totalLen + geom.length()
         count = count + 1
     return totalLen, count
+def float_de(s):
+    if s.strip()=='':
+        s='0'
+
+    if s.find(",")>0:
+        s = s.replace('.','').replace(',','.')
+
+    try:
+        a = float(s)
+    except ValueError:
+        #QgsMessageLog.logMessage("String :"+str(s)+" ist keine Zahl", 'M150xml', Qgis.Warning)
+        a = 0
+    return a
+
+
+
+def value_de(s):
+    s=str(s)
+    if s.strip()=='' or s == 'None':
+        s='0'
+
+    if s.find(".")>0:
+        s = s.replace('.',',')
+
+    try:
+        a = s
+    except ValueError:
+        #QgsMessageLog.logMessage("String :"+str(s)+" ist keine Zahl", 'M150xml', Qgis.Warning)
+        a = '0'
+    return a
 
 def is_number(s):
     try:
