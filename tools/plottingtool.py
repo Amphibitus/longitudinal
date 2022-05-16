@@ -61,7 +61,7 @@ except:
 try:
     from matplotlib import *
     import matplotlib
-    #print("profiletool : matplotlib %s imported" % matplotlib.__version__)
+    #print("longitudinal : matplotlib %s imported" % matplotlib.__version__)
     has_mpl = True
 except:
     pass
@@ -498,15 +498,15 @@ class PlottingTool:
 
         fileName = getSaveFileName(parent = iface.mainWindow(),
                                    caption = "Save As",
-                                   directory = wdg.profiletoolcore.loaddirectory,
+                                   directory = wdg.longitudinalcore.loaddirectory,
                                    filter = "Scalable Vector Graphics (*.svg)")
 
 
         if fileName:
-            wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
+            wdg.longitudinalcore.loaddirectory = os.path.dirname(fileName)
             qgis.PyQt.QtCore.QSettings().setValue(
-                "profiletool/lastdirectory",
-                wdg.profiletoolcore.loaddirectory)
+                "longitudinal/lastdirectory",
+                wdg.longitudinalcore.loaddirectory)
 
             if library == "PyQtGraph":
                 exporter = exporters.SVGExporter(wdg.plotWdg.getPlotItem().scene())
@@ -528,13 +528,13 @@ class PlottingTool:
                 #return
         fileName = getSaveFileName(parent = iface.mainWindow(),
                                    caption = "Save As",
-                                   directory = wdg.profiletoolcore.loaddirectory,
+                                   directory = wdg.longitudinalcore.loaddirectory,
                                    #filter = "Profile of " + name + ".png",
                                    filter = "Portable Network Graphics (*.png)")
 
         if fileName:
-            wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
-            qgis.PyQt.QtCore.QSettings().setValue("profiletool/lastdirectory", wdg.profiletoolcore.loaddirectory)
+            wdg.longitudinalcore.loaddirectory = os.path.dirname(fileName)
+            qgis.PyQt.QtCore.QSettings().setValue("longitudinal/lastdirectory", wdg.longitudinalcore.loaddirectory)
 
             if library == "PyQtGraph":
                 exporter =  exporters.ImageExporter(wdg.plotWdg.getPlotItem())
@@ -550,17 +550,17 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        #fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As",wdg.profiletoolcore.loaddirectory,"Profile of " + name + ".dxf","dxf (*.dxf)")
+        #fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As",wdg.longitudinalcore.loaddirectory,"Profile of " + name + ".dxf","dxf (*.dxf)")
         fileName = getSaveFileName(parent = iface.mainWindow(),
                                    caption = "Save As",
-                                   directory = wdg.profiletoolcore.loaddirectory,
+                                   directory = wdg.longitudinalcore.loaddirectory,
                                    #filter = "Profile of " + name + ".png",
                                    filter = "dxf (*.dxf)")
         if fileName:
-            wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
+            wdg.longitudinalcore.loaddirectory = os.path.dirname(fileName)
             qgis.PyQt.QtCore.QSettings().setValue(
-                "profiletool/lastdirectory",
-                 wdg.profiletoolcore.loaddirectory)
+                "longitudinal/lastdirectory",
+                 wdg.longitudinalcore.loaddirectory)
 
             drawing = dxf.drawing(fileName)
             for profile in profiles:

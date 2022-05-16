@@ -15,9 +15,10 @@ from builtins import object
 
 import locale
 
+from qgis.PyQt.QtWidgets import *
+
 from qgis.PyQt.QtCore import *
 from qgis.PyQt.QtGui import *
-
 from qgis.core import *
 from qgis.gui import *
 
@@ -194,12 +195,12 @@ def getSaveFileName(parent, caption, directory, filter):
 # get geometry from different geometry types
 def get_geometry (fg):
     # test for multilinestring
-    if fg.wkbType() == 5: 
+    if fg.wkbType() == 5 or fg.wkbType() == 1005: 
         nodes = fg.asMultiPolyline()[0]
         return nodes
                     
     # test for linesting
-    if fg.wkbType() == 2:
+    if fg.wkbType() == 2  or fg.wkbType() == 1002:
         nodes = fg.asPolyline()
         return nodes
 
@@ -214,6 +215,14 @@ def getLength(layer):
         totalLen = totalLen + geom.length()
         count = count + 1
     return totalLen, count
+
+
+def getdist(p1,p2):
+    x=(((p2.x()-p1.x())**2)+((p2.y()-p1.y())**2))**0.5
+    return  x
+
+    
+
 def float_de(s):
     if s.strip()=='':
         s='0'
@@ -253,7 +262,7 @@ def is_number(s):
         return False
         
 # Suche alle linien, die miteinander verküpft sind (funktioniert nach unten, aber auch nach oben)
-def selectDownstream(layer,sourceFeatID,dist,uIdirection):
+def selectDownstream(layer,sourceFeatID,tolerance,uIdirection):
     global totallength
     proj = QgsProject.instance()
     
@@ -268,18 +277,16 @@ def selectDownstream(layer,sourceFeatID,dist,uIdirection):
 
     # get crs for tolerance setting
     crs = layer.crs().authid()
-    #add tolerance value
-    tolerance = 1         
+
     # setup total length
     totallength = 0.0        
     # print (crs)
     if crs == 'EPSG:4269':
         rec = .0001
-        tolerance = .0001
+        
     else:
         #rec = .1
-        #rec = self.spinBoxTol.value()
-        rec=dist
+        rec = tolerance
 
     selection_list = []
     final_list = []
@@ -315,10 +322,10 @@ def selectDownstream(layer,sourceFeatID,dist,uIdirection):
             
         # select all features around upstream coordinate 
         # using a bounding box
-        rectangle = QgsRectangle(upstream_coord.x() - rec, 
-                        upstream_coord.y() - rec, 
-                        upstream_coord.x() + rec, 
-                        upstream_coord.y() + rec)
+        rectangle = QgsRectangle(upstream_coord.x() - rec/2, 
+                        upstream_coord.y() - rec/2, 
+                        upstream_coord.x() + rec/2, 
+                        upstream_coord.y() + rec/2)
         # rectangle = QgsRectangle (minx, miny, maxx, maxy)
         request = QgsFeatureRequest().setFilterRect(rectangle)
         features = layer.getFeatures(request)
@@ -341,8 +348,7 @@ def selectDownstream(layer,sourceFeatID,dist,uIdirection):
 
             
             #get distance from downstream node to upstream node
-            dist = distance.measureLine(downstream_coord, 
-                            upstream_coord)
+            dist = distance.measureLine(downstream_coord,upstream_coord)
             
             if dist < tolerance:
                 #add feature to final list
@@ -365,7 +371,77 @@ def selectDownstream(layer,sourceFeatID,dist,uIdirection):
     
     #self.uSelectedLine.setText('Now selected Lines '+ str(len(final_list)))
 
-def selectPointFeaturefromlineFeature(LineLayer,lineFeature,pointLayer, dist):
+
+# Suche alle linien, die miteinander verküpft sind (funktioniert nach unten, aber auch nach oben)
+def Linesorted(layer, selection_list,tolerance,uIdirection):
+    
+
+    #setup distance
+    distance = QgsDistanceArea()
+    # the unit of measure will be set to the same as the layer
+    # maybe it would be better to set it to the map CRS
+    distance.setSourceCrs(layer.sourceCrs(), QgsProject.instance().transformContext())
+        
+
+    # get crs for tolerance setting
+    crs = layer.crs().authid()
+    if crs == 'EPSG:4269':
+
+        tolerance = .0001
+ 
+
+    provider = layer.dataProvider()
+
+    # erstmal nach oben
+    for feature in  selection_list:
+        print ('Starte mit:'+repr(str(feature.id())),end='')
+        # get upper nodes
+        nodes = get_geometry (feature.geometry())
+        upstream_coord = nodes[0]
+        top_feature=''
+        for featuresearch in  selection_list:
+            if featuresearch.id != feature.id:
+                 # get under  nodes
+                nodes = get_geometry (featuresearch.geometry())
+                downstream_coord = nodes[-1]
+           
+                if  distance.measureLine(downstream_coord, upstream_coord)<=tolerance:
+                    print ('Oben gefunden:'+repr(str(featuresearch.id())))
+                    top_feature=featuresearch
+                    break
+        if top_feature=='':
+            break
+    final_list = []
+    
+     # und jetzt nach unten
+    print ('Anfangshaltung:'+repr(str(feature.id())))
+    while selection_list:
+        final_list.append(feature)
+        
+        #remove feature from selection list
+        selection_list.pop(selection_list.index(feature))
+
+        print ('Starte mit:'+repr(str(feature.id())),end='')
+        # get upper nodes
+        nodes = get_geometry (feature.geometry())
+        downstream_coord = nodes[-1] 
+       
+        for featuresearch in  selection_list:
+            if featuresearch.id != feature.id:
+                 # get under  nodes
+                nodes = get_geometry (featuresearch.geometry())
+                upstream_coord = nodes[0]
+           
+                if  distance.measureLine(downstream_coord, upstream_coord)<=tolerance:
+                    print ('Unten gefunden:'+repr(str(featuresearch.id())))
+                    feature=featuresearch
+                    break
+
+    
+    return final_list
+
+
+def selectPointFeaturefromlineFeature(LineLayer,lineFeature,pointLayer, tolerance):
     
     pfinal_list=[]
     pfeaturesUp=None
@@ -375,18 +451,14 @@ def selectPointFeaturefromlineFeature(LineLayer,lineFeature,pointLayer, dist):
     
     # get crs for tolerance setting
     crs = LineLayer.crs().authid()
-    #add tolerance value
-    tolerance = 1         
-    # setup total length
-    totallength = 0.0        
+      
     # print (crs)
     if crs == 'EPSG:4269':
         rec = .0001
-        tolerance = .0001
     else:
         #rec = .1
         #rec = self.spinBoxTol.value()
-        rec = dist
+        rec = tolerance
 
 
     # get nodes
@@ -395,10 +467,10 @@ def selectPointFeaturefromlineFeature(LineLayer,lineFeature,pointLayer, dist):
 
     # select all features around upstream coordinate 
     # using a bounding box
-    rectangle = QgsRectangle(upstream_coord.x() - rec, 
-                    upstream_coord.y() - rec, 
-                    upstream_coord.x() + rec, 
-                    upstream_coord.y() + rec)
+    rectangle = QgsRectangle(upstream_coord.x() - rec/2, 
+                    upstream_coord.y() - rec/2, 
+                    upstream_coord.x() + rec/2, 
+                    upstream_coord.y() + rec/2)
     # rectangle = QgsRectangle (minx, miny, maxx, maxy)
     request = QgsFeatureRequest().setFilterRect(rectangle)
     pfeaturesUp = pointLayer.getFeatures(request)
@@ -409,10 +481,10 @@ def selectPointFeaturefromlineFeature(LineLayer,lineFeature,pointLayer, dist):
     downstream_coord = nodes[-1]
     # select all features around upstream coordinate 
     # using a bounding box
-    rectangle = QgsRectangle(downstream_coord.x() - rec, 
-                    downstream_coord.y() - rec, 
-                    downstream_coord.x() + rec, 
-                    downstream_coord.y() + rec)
+    rectangle = QgsRectangle(downstream_coord.x() - rec/2, 
+                    downstream_coord.y() - rec/2, 
+                    downstream_coord.x() + rec/2, 
+                    downstream_coord.y() + rec/2)
     # rectangle = QgsRectangle (minx, miny, maxx, maxy)
     request = QgsFeatureRequest().setFilterRect(rectangle)
     pfeaturesDown = pointLayer.getFeatures(request)

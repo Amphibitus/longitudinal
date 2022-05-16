@@ -75,8 +75,13 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
     proj = QgsProject.instance()
+    
     iface= qgis.utils.iface
     sourceFeatID= None
+    pointFeatureList= None
+    lineFeatureList = None
+
+
 
     def __init__(self, parent=None):
         """Constructor."""
@@ -117,8 +122,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.sourceIdEmitPoint.canvasClicked.connect(self.setSourceId)
         self.iface.mapCanvas().setMapTool(self.sourceIdEmitPoint)        
 
-        self.uLineLayer.currentIndexChanged.connect(self.reloadFields)
-        self.uPointLayer.currentIndexChanged.connect(self.reloadFields)
+        #self.uLineLayer.currentIndexChanged.connect(self.reloadLineFields)
+        #self.uPointLayer.currentIndexChanged.connect(self.reloadPointFields)
          
         self.uCopytoClip.clicked.connect(self.copyClipboard)
         self.uCopytoDXF.clicked.connect(self.outDXF)
@@ -143,65 +148,88 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.uPointLayer.addItems(gpiutils.getPointLayerNames())
         
         self.uLineLayer.clear()
-        Lstptos=gpiutils.getLineLayerNames()
-        self.uLineLayer.addItems(Lstptos)
+        self.uLineLayer.addItems(gpiutils.getLineLayerNames())
         #try to find activelayer and select it in the point combobox
 
 
-        try:
-            lyrName = qgis.utils.iface.activeLayer().name()
-            if lyrName in Lstptos:
-                self.uLineLayer.setCurrentText(lyrName)
-        except Exception as e:
-            print('Erro:',str(e))
-            pass
+#        try:
+#            lyrName = qgis.utils.iface.activeLayer().name()
+#            if lyrName in Lstptos:
+#                self.uLineLayer.setCurrentText(lyrName)
+#        except Exception as e:
+#            print('Erro:',str(e))
+#            pass
 
         # search for old settings
-    
-        try: 
-            self.uLineLayer.setCurrentText(QSettings().value('LineLayer'))
-            self.uZfield1.setCurrentText(QSettings().value('zField1'))
-            self.uZfield2.setCurrentText(QSettings().value('zField2'))
-            
-            self.uPointLayer.setCurrentText(QSettings().value('PointLayer'))
-            self.uZfieldP1.setCurrentText(QSettings().value('zFieldP1'))
-            self.uZfieldP2.setCurrentText(QSettings().value('zFieldP2'))
-            self.uDiameter.setCurrentText(QSettings().value('uDiameter'))
-            self.uDiameterP.setCurrentText(QSettings().value('uDiameterP'))
-            self.uLineID.setCurrentText(QSettings().value('LineID'))
-            self.uPointID.setCurrentText(QSettings().value('PointID'))
+        settings = QSettings()
+        #try: 
+  
+        self.uLineLayer.setCurrentText(settings.value('/longitudinal/LineLayer'))
+        self.reloadLineFields()
+        
+        self.uPointLayer.setCurrentText(settings.value('/longitudinal/PointLayer'))
+        self.reloadPointFields()
 
-        except Exception as e:
-            print('Erro:',str(e))
-            pass
 
-    def reloadFields(self):
+        self.uZfield1.setCurrentText(settings.value('/longitudinal/zField1'))
+        self.uZfield2.setCurrentText(settings.value('/longitudinal/zField2'))
+        
+        self.uZfieldP1.setCurrentText(settings.value('/longitudinal/zFieldP1'))
+        self.uZfieldP2.setCurrentText(settings.value('/longitudinal/zFieldP2'))
+
+        self.uDiameter.setCurrentText(settings.value('/longitudinal/uDiameter'))
+        self.uDiameterP.setCurrentText(settings.value('/longitudinal/uDiameterP'))
+        self.uLineID.setCurrentText(settings.value('/longitudinal/LineID'))
+        self.uPointID.setCurrentText(settings.value('/longitudinal/PointID'))
+
+        self.labXAxis.setText(settings.value('/longitudinal/labXAxis'))
+        self.labYAxis.setText(settings.value('/longitudinal/labYAxis'))
+        self.labHeader.setText(settings.value('/longitudinal/labHeader'))
+
+        self.labYScale.setText(settings.value('/longitudinal/labYScale'))
+        self.labLegend.setText(settings.value('/longitudinal/labLegend'))
+
+        # Wenn Layerame gewechselt wird Felder aktualisieren
+        self.uLineLayer.currentIndexChanged.connect(self.reloadLineFields)
+        self.uPointLayer.currentIndexChanged.connect(self.reloadPointFields)
+
+
+        #except Exception as e:
+        #    print('Erro:',str(e))
+        #    pass
+
+    def reloadLineFields(self):
         # print('reload fields')
         self.uZfield1.clear()
         self.uZfield2.clear()
-        self.uZfieldP1.clear()
-        self.uZfieldP2.clear()
-
         self.uDiameter.clear()
-        self.uDiameterP.clear()
         self.uLineID.clear()
-        self.uPointID.clear()
-       
-        self.axes.clear()
+
 
         if self.uLineLayer.currentText():
             line_layer = self.proj.mapLayersByName(self.uLineLayer.currentText())[0] #processing.getObject(str())
-            point_layer = self.proj.mapLayersByName(self.uPointLayer.currentText())[0] #processing.getObject(str())
-
+           
             self.uZfield1.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
             self.uZfield2.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
+            self.uDiameter.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
+            self.uLineID.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double, 10]))# 10 is for string
+            
+    def reloadPointFields(self):
+        # print('reload fields')
+        self.uZfieldP1.clear()
+        self.uZfieldP2.clear()
+        self.uDiameterP.clear()
+        self.uPointID.clear()
+
+        if self.uPointLayer.currentText():
+            
+            point_layer = self.proj.mapLayersByName(self.uPointLayer.currentText())[0] #processing.getObject(str())
+
             self.uZfieldP1.addItems(gpiutils.getFieldNames(point_layer, [QVariant.Int, QVariant.Double]))
             self.uZfieldP2.addItems(gpiutils.getFieldNames(point_layer, [QVariant.Int, QVariant.Double]))
-            self.uDiameter.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
             self.uDiameterP.addItems(gpiutils.getFieldNames(point_layer, [QVariant.Int, QVariant.Double]))
-            self.uLineID.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double, 10]))# 10 is for string
             self.uPointID.addItems(gpiutils.getFieldNames(point_layer, [QVariant.Int, QVariant.Double, 10]))# 10 is for string
-            
+
 
                 
     def copyClipboard (self):
@@ -231,7 +259,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if not self.tabWidget.currentIndex()==0:
             return
 
-        # Wenn kein LineLayer gfewaehlt oder vorhanden
+        # Wenn kein LineLayer gewaehlt oder vorhanden
         if self.uLineLayer.currentText() == '':
             QMessageBox.warning(self,'Warning','Please select some LineLayer')
             self.tabWidget.setCurrentIndex(1)
@@ -243,21 +271,32 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         zFieldP2 = self.uZfieldP2.currentText()
         uDiameter = self.uDiameter.currentText()
         uDiameterP = self.uDiameterP.currentText()
+
         LineID = self.uLineID.currentText()
         PointID = self.uPointID.currentText()
 
         settings = QSettings()
-        settings.setValue('LineLayer',self.uLineLayer.currentText())
-        settings.setValue('PointLayer',self.uPointLayer.currentText())
-        settings.setValue('zField1',zField1)
-        settings.setValue('zField2',zField2)
-        settings.setValue('zFieldP1',zFieldP1)
-        settings.setValue('zFieldP2',zFieldP2)
-        settings.setValue('uDiameter',uDiameter)
-        settings.setValue('uDiameterP',uDiameterP)
-        
-        settings.setValue('LineID',LineID)
-        settings.setValue('PointID',PointID)
+        settings.setValue('/longitudinal/LineLayer',self.uLineLayer.currentText())
+        settings.setValue('/longitudinal/PointLayer',self.uPointLayer.currentText())
+
+        settings.setValue('/longitudinal/zField1',zField1)
+        settings.setValue('/longitudinal/zField2',zField2)
+        settings.setValue('/longitudinal/zFieldP1',zFieldP1)
+        settings.setValue('/longitudinal/zFieldP2',zFieldP2)
+        settings.setValue('/longitudinal/uDiameter',uDiameter)
+        settings.setValue('/longitudinal/uDiameterP',uDiameterP)
+  
+        settings.setValue('/longitudinal/LineID',self.uLineID.currentText())
+        settings.setValue('/longitudinal/PointID',self.uPointID.currentText())
+      
+        settings.setValue('/longitudinal/labXAxis',self.labXAxis.text())
+        settings.setValue('/longitudinal/labYAxis',self.labYAxis.text())
+        settings.setValue('/longitudinal/labHeader',self.labHeader.text())
+
+        settings.setValue('/longitudinal/labYScale',self.labYScale.text())
+        settings.setValue('/longitudinal/labLegend',self.labLegend.text())
+
+
 
         LineLayer = self.proj.mapLayersByName(self.uLineLayer.currentText())[0] #processing.getObject(str())
         PointLayer = self.proj.mapLayersByName(self.uPointLayer.currentText())[0] #processing.getObject(str())
@@ -277,21 +316,26 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         #lineFeatureList =sorted(lineFeatureList,key = lambda zz: zz[zField1],reverse = True)
         
-        print ('Unsortierte Liste:'  + str(len(lineFeatureList)) )       
-        for lineFeature in lineFeatureList:   
-            print(lineFeature.id())
+        #print ('Unsortierte Liste:'  + str(len(lineFeatureList)) )       
+        #for lineFeature in lineFeatureList:   
+        #    print(lineFeature.id())
 
-        lineFeatureList = self.Linesorted(lineFeatureList)
+        #Sortieren der Linienliste
+        #lineFeatureList = Linesorted(lineFeatureList)
+        
+        lineFeatureList = gpiutils.Linesorted(LineLayer,lineFeatureList,float(self.spinBoxTol.value()),self.uIdirection.isChecked)
 
-        print ('Sortierte Liste:' + str(len(lineFeatureList)))
-        for lineFeature in lineFeatureList:   
-            print(lineFeature.id())
+        #print ('Sortierte Liste:' + str(len(lineFeatureList)))
+        #for lineFeature in lineFeatureList:   
+        #    print(lineFeature.id())
 
         selfeatP=[]
+        selfpointFeatureList=[]
         for lineFeature in lineFeatureList:
-            selP = gpiutils.selectPointFeaturefromlineFeature(LineLayer,lineFeature,PointLayer,self.spinBoxTol.value())                
+            selP = gpiutils.selectPointFeaturefromlineFeature(LineLayer,lineFeature,PointLayer,float(self.spinBoxTol.value()))                
             if selP[0] :
                 selfeatP.append(selP[0].id())
+                selfpointFeatureList.append(selP[0])
             else:
                 QMessageBox.warning(self,'Warning','No Upperpoint from lineFeature '+lineFeature[LineID]+ ' found')
                 selectedFeatureID = []
@@ -308,6 +352,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                       
         if selP[1] :
             selfeatP.append(selP[1].id())
+            selfpointFeatureList.append(selP[1])
         else:
             QMessageBox.warning(self,'Warning','No Downpoint from lineFeature '+lineFeature[LineID]+ ' found')
             selectedFeatureID = []
@@ -321,12 +366,14 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         PointLayer.removeSelection()                    
         PointLayer.selectByIds(selfeatP)
-        pointFeatureList = PointLayer.selectedFeatures()
+        pointFeatureList = selfpointFeatureList
 
 
         self.uSelectedLine.setText('Now selected Lines '+ str(len(lineFeatureList)))
         self.uSelectedPoints.setText('Now selected Points '+ str(len(pointFeatureList)))
 
+        self.lineFeatureList=lineFeatureList
+        self.pointFeatureList=pointFeatureList
 
         lineList = []
         zListSohle = []
@@ -348,28 +395,43 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             lineGeom = lineFeature.geometry()
             #print ("Perimeter:", lineGeom.length())
-            # Abstand
-            distList.append(linelength+0.5) #Laenge
-            
+
             #Haltung
+
+            if lineFeature[uDiameter] :
+                zRohrbreite=round(lineFeature[uDiameter],2)
+                if zRohrbreite<=0 or zRohrbreite>5000 :
+                        zRohrbreite =1.0
+            else:
+                zRohrbreite =1  
+
             zListSohle.append(lineFeature[zField1])
-            zListScheitel.append(lineFeature[zField1]+lineFeature[uDiameter]/1000)
+            zListScheitel.append(lineFeature[zField1]+zRohrbreite/1000)
 
             selpoint=PointLayer.getFeature(selfeatP[lfdnr])
             zListGelaende.append(selpoint[zFieldP1]) #Gelaendehoehe
 
             #Schacht
+            if selpoint[uDiameterP] :
+                zSchachtbreite=round(selpoint[uDiameterP],2)
+                if zSchachtbreite<=0 or zSchachtbreite>5 :
+                        zSchachtbreite =1.0
+            else:
+                zSchachtbreite =1  
+            # Abstand
+            distList.append(linelength) #Laenge
+                                      
             #Sohle
-            distListSchacht.append(linelength-0.5)
+            distListSchacht.append(linelength-zSchachtbreite/2)
             zListSchacht.append(selpoint[zFieldP2])
             #Schacht oben links
-            distListSchacht.append(linelength-0.5)
+            distListSchacht.append(linelength-zSchachtbreite/2)
             zListSchacht.append(selpoint[zFieldP1])
             #Schacht oben rechts
-            distListSchacht.append(linelength+0.5)
+            distListSchacht.append(linelength+zSchachtbreite/2)
             zListSchacht.append(selpoint[zFieldP1])            
             #Schacht unten
-            distListSchacht.append(linelength+0.5)
+            distListSchacht.append(linelength+zSchachtbreite/2)
             zListSchacht.append(selpoint[zFieldP2])            
 
             pointIdList.append(selpoint[PointID])
@@ -382,25 +444,25 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 return
 
             # Abstand
-            distList.append(round(linelength,3)-0.5)
+            distList.append(round(linelength,3)-zSchachtbreite/2)
 
             zListSohle.append(lineFeature[zField2])
-            zListScheitel.append(lineFeature[zField2]+lineFeature[uDiameter]/1000)
+            zListScheitel.append(lineFeature[zField2]+zRohrbreite/1000)
             
             selpoint=PointLayer.getFeature(selfeatP[lfdnr+1])
             zListGelaende.append(selpoint[zFieldP1])
 
             #Schacht 2                       
-            distListSchacht.append(linelength-0.5)
+            distListSchacht.append(linelength-zSchachtbreite/2)
             zListSchacht.append(lineFeature[zField2])
 
-            distListSchacht.append(linelength-0.5)
+            distListSchacht.append(linelength-zSchachtbreite/2)
             zListSchacht.append(selpoint[zFieldP1])
 
-            distListSchacht.append(linelength+0.5)
+            distListSchacht.append(linelength+zSchachtbreite/2)
             zListSchacht.append(selpoint[zFieldP1])            
 
-            distListSchacht.append(linelength+0.5)
+            distListSchacht.append(linelength+zSchachtbreite/2)
             zListSchacht.append(selpoint[zFieldP2])            
 
             #Beschriftung
@@ -478,100 +540,6 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mplCanvas.draw()  
     
    
-    def Linesorted(self,lineFeatureList):
-
-        def findeOben(lineList,sLine):
-            for Line in lineList:
-                if Line[2] == sLine[1]:
-                    return Line
-                    
-            return False
-
-        def findeUnten(lineList,sLine):
-            for Line in lineList:
-                if Line[1] == sLine[2]:
-                    return Line
-                    
-            return False
-
-        def inListe(lineList,sLine):
-            for Line in lineList:
-                if Line[0] == sLine[0]:
-                    return True
-                    
-            return False
-
-        def findFeaturebyID(xfeatures,id):
-            for xfeature in xfeatures:
-                if xfeature.id() == id:
-                    return xfeature
-            
-            return False               
-        
-        # get geometry from different geometry types
-        def get_geometry (fg):
-            # test for multilinestring
-            if fg.wkbType() == 5: 
-                nodes = fg.asMultiPolyline()[0]
-                return nodes
-                            
-            # test for linesting
-            if fg.wkbType() == 2:
-                nodes = fg.asPolyline()
-                return nodes
-    
-
-        lineList=[]
-        
-        selection_start_list=[]
-        return_list=[]
-
-        tolerance = 1.0
-        
-
-        #iterate thru features to add to lists
-        for feature in lineFeatureList:            
-            # add selected features to final list
-            nodes = get_geometry(feature.geometry())
-            xyo = str(int(nodes[0].x()/tolerance))+str(int(nodes[0].y()/tolerance))
-            xyu = str(int(nodes[-1].x()/tolerance))+str(int(nodes[-1].y()/tolerance))
-            lineList.append([feature.id(),xyo,xyu])
-
-        # ab nach oben
-        for line in lineList:
-            lineoben = line
-            while lineoben:
-                mlineoben = lineoben
-                lineoben = findeOben(lineList,lineoben)
-            
-            if not inListe(selection_start_list,mlineoben): 
-                selection_start_list.append(mlineoben)
-
-        print(selection_start_list)
-
-        # und wieder nach unten
-        return_list = []
-        for line in selection_start_list:
-            lineunten = line
-            
-            while lineunten:
-                mlineunten = lineunten
-                lineunten = findeUnten(lineList,lineunten)
-                return_list.append(mlineunten)
-        
-        # Feature in neue Liste
-
-           
-        rlineFeatureList = []
-        for line in return_list:
-             f = findFeaturebyID(lineFeatureList,line[0])
-             if not f == False:  
-                 rlineFeatureList.append(f)
- 
-        return rlineFeatureList
-        
-
-
     def clickedOnCanvasAction(self,clickedPoint):
         
             self.iface.mapCanvas().setMapTool(self.module.mapSelectionTool)
@@ -627,7 +595,6 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         event.accept()
     
 
-
     def setSourceId(self, pt):
 
         if not self.buttonSelectSourceId.isChecked():
@@ -643,7 +610,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 pt.x() + width,
                                 pt.y() + width)
 
-        layer.selectByRect(rect,True)
+        layer.selectByRect(rect)
         selected_features = layer.selectedFeatures()
         if layer.selectedFeatureCount()>1:
             QMessageBox.Warning(self, 'Warning',
@@ -656,40 +623,195 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         for feat in selected_features:
             self.sourceFeatID=feat.id()
         
-        gpiutils.selectDownstream(layer,self.sourceFeatID,self.spinBoxTol.value(),self.uIdirection.isChecked())
+        gpiutils.selectDownstream(layer,self.sourceFeatID,float(self.spinBoxTol.value()),self.uIdirection.isChecked())
         
         self.buttonSelectSourceId.setChecked(False)
 
 
-    def outDXF(self, iface, wdg, mdl, library, profiles, type="3D"):
+    def outDXF(self):
+        #,iface, wdg, mdl, library, profiles, type="3D"
+        #self.values = [distList, zListSohle, zListScheitel, zListGelaende, distListSchacht, zListSchacht,pointIdList,zminList]
+        zField1 = self.uZfield1.currentText()
+        zField2 = self.uZfield2.currentText()
+        zFieldP1 = self.uZfieldP1.currentText()
+        zFieldP2 = self.uZfieldP2.currentText()
+        uDiameter = self.uDiameter.currentText()
+        uDiameterP = self.uDiameterP.currentText()
 
-        for i in range (0,mdl.rowCount()):
-            if  mdl.item(i,0).data(Qt.CheckStateRole):
-                name = str(mdl.item(i,2).data(Qt.EditRole))
-                #return
-        #fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As",wdg.profiletoolcore.loaddirectory,"Profile of " + name + ".dxf","dxf (*.dxf)")
-        fileName = gpiutils.getSaveFileName(parent = iface.mainWindow(),
+
+        LineID = self.uLineID.currentText()
+        PointID = self.uPointID.currentText()
+
+        
+
+        fileName = gpiutils.getSaveFileName(None,
                                    caption = "Save As",
-                                   directory = wdg.profiletoolcore.loaddirectory,
+                                   directory = "",
                                    #filter = "Profile of " + name + ".png",
                                    filter = "dxf (*.dxf)")
-        if fileName:
-            wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
-            qgis.PyQt.QtCore.QSettings().setValue(
-                "profiletool/lastdirectory",
-                 wdg.profiletoolcore.loaddirectory)
 
+        if fileName and len(self.lineFeatureList):
+
+            
             drawing = dxf.drawing(fileName)
-            for profile in profiles:
-                name = profile['layer'].name()
-                drawing.add_layer(name)
-                if type == '2D':
-                    points = [(l, z, 0) for l, z
-                              in zip(profile['l'], profile['z'])
-                              if z is not None]
+            drawing.add_layer("Laengs_Haltung")
+
+            
+            #Legende     
+            scaleY =1    
+            scaleY=self.labYScale.text()
+            zeilenh=2
+            schrifth=.3
+            schriftX=-5
+            linelength=schriftX
+            
+            #sZeilen="Höhe geplant [müNN],Geländehöhe [müNN],Sohlhöhe [müNN],Tiefe [m],Länge [m],Gefälle [o/oo],Nennweite [mm],Name"
+            sZeilen = self.labLegend.text()
+            sZeilen = sZeilen.split(',')
+
+
+            lineFeature=self.lineFeatureList[len(self.lineFeatureList)-1]
+            bezugsh=round(lineFeature[zField2] ,0)
+            drawing.add(dxf.text(bezugsh,[linelength,bezugsh,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+
+            for ze in range(1, len(sZeilen)+1):
+                drawing.add(dxf.text(sZeilen[ze-1],[linelength,bezugsh-zeilenh*ze,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+
+            linelength=0
+            lfdnr =0
+            pGelaende=[]
+            pSchacht=[]
+            pSohle=[]
+            pScheitel=[]
+
+            ###to draw 
+            for lineFeature in self.lineFeatureList:
+
+                lineGeom = lineFeature.geometry()
+
+               
+                #Schacht waehlen
+                pointFeature= self.pointFeatureList[lfdnr]
+                
+                #Sohle
+                zDeckelSchacht=round(pointFeature[zFieldP1],2)
+                zSohleSchacht=round(pointFeature[zFieldP2],2)
+
+                if pointFeature[uDiameterP] :
+                    zSchachtbreite=round(pointFeature[uDiameterP],2)
+                    if zSchachtbreite<=0:
+                         zSchachtbreite =1.0
                 else:
-                    points = [(x, y, z) for x, y, z
-                              in zip(profile['x'], profile['y'], profile['z'])
-                              if z is not None]
-                drawing.add(dxf.polyline(points, color=7, layer=name))
+                    zSchachtbreite =1
+
+                zNameSchacht= pointFeature[PointID]
+
+                pSchacht.append([linelength-zSchachtbreite/2,zDeckelSchacht,0])
+                pSchacht.append([linelength-zSchachtbreite/2,zSohleSchacht,0])
+                pSchacht.append([linelength+zSchachtbreite/2,zSohleSchacht,0])
+                pSchacht.append([linelength+zSchachtbreite/2,zDeckelSchacht,0]) 
+
+                drawing.add(dxf.polyline(pSchacht, color=7, layer="Laengs_Schacht"))
+                #drawing.add(dxf.text(zNameSchacht,[linelength,zDeckelSchacht,0],schrifth,color=7,rotation=0, layer="Laengs_Schacht"))
+                drawing.add(dxf.text(zNameSchacht,[linelength,bezugsh-zeilenh*8,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                pSchacht=[]
+
+
+                #Haltung
+
+
+                if lineFeature[uDiameter] :
+                    zRohrbreite=round(lineFeature[uDiameter],2)
+                    if zRohrbreite<=0 or zRohrbreite>5000 :
+                            zRohrbreite =1.0
+                else:
+                    zRohrbreite =1  
+
+                zSohleO=round(lineFeature[zField1],2)
+                zScheitelO=round(lineFeature[zField1]+zRohrbreite/1000,2)
+                zSohleU=round(lineFeature[zField2],2)
+                zScheitelU=round(lineFeature[zField2]+zRohrbreite/1000,2)
+                zName= lineFeature[LineID]
+                laenge=round(lineGeom.length(),2)
+                gefaelle=round((zSohleO-zSohleU)/laenge*1000,0)
+                tiefe=round(zDeckelSchacht-zSohleSchacht,2)
+
+
+                pGelaende.append([linelength,zDeckelSchacht,0])
+
+                pSohle.append([linelength+zSchachtbreite/2,zSohleO,0])
+                pScheitel.append([linelength+zSchachtbreite/2,zScheitelO,0])
+
+
+                # Legende
+                drawing.add(dxf.text(zDeckelSchacht,        [linelength,bezugsh-zeilenh*1,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(zDeckelSchacht,        [linelength,bezugsh-zeilenh*2,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(zSohleSchacht,         [linelength,bezugsh-zeilenh*3,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(tiefe,                 [linelength,bezugsh-zeilenh*4,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(laenge,                [linelength+laenge/2,bezugsh-zeilenh*5,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(gefaelle,              [linelength+laenge/2,bezugsh-zeilenh*6,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(zRohrbreite,           [linelength+laenge/2,bezugsh-zeilenh*7,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(zName,                 [linelength+laenge/2,bezugsh-zeilenh*8,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                #drawing.add(dxf.text(zNameSchacht,          [linelength+laenge/2,zDeckelSchacht,0],schrifth,color=7,rotation=0, layer="Laengs_Schacht"))
+
+                #Legende senkrecht
+                drawing.add(dxf.polyline([[linelength,zSohleSchacht,0],[linelength,bezugsh-zeilenh*len(sZeilen),0]], color=7, layer="Laengs_Legende"))
+
+                #GesamtLaenge 
+                try:
+                    linelength+=laenge
+                except:
+                    QMessageBox.warning(self,'Warning','No length from geometry')
+                    return
+
+                pSohle.append([linelength-zSchachtbreite/2,zSohleU,0])
+                pScheitel.append([linelength-zSchachtbreite/2,zScheitelU,0])
+                
+                lfdnr+=1
+
+
+
+            #Endschacht            
+            pointFeature= self.pointFeatureList[lfdnr]
+
+
+
+            #Sohle
+            zDeckelSchacht=pointFeature[zFieldP1]
+            zSohleSchacht=pointFeature[zFieldP2]
+            tiefe=round(zDeckelSchacht-zSohleSchacht,2)
+            zNameSchacht= lineFeature[LineID]
+
+            pSchacht.append([linelength-zSchachtbreite/2,zDeckelSchacht,0])
+            pSchacht.append([linelength-zSchachtbreite/2,zSohleSchacht,0])
+            pSchacht.append([linelength+zSchachtbreite/2,zSohleSchacht,0])
+            pSchacht.append([linelength+zSchachtbreite/2,zDeckelSchacht,0])              
+            drawing.add(dxf.polyline(pSchacht, color=7, layer="Laengs_Schacht"))
+            drawing.add(dxf.text(zNameSchacht,[linelength,zDeckelSchacht,0],schrifth,color=7,rotation=0, layer="Laengs_Schacht"))
+            drawing.add(dxf.text(zName,       [linelength,bezugsh-zeilenh*8,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+
+            pSchacht=[]  
+
+
+            # Legende
+            drawing.add(dxf.text(zDeckelSchacht,        [linelength,bezugsh-zeilenh*1,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+            drawing.add(dxf.text(zDeckelSchacht,        [linelength,bezugsh-zeilenh*2,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+            drawing.add(dxf.text(zSohleSchacht,         [linelength,bezugsh-zeilenh*3,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+            drawing.add(dxf.text(tiefe,                 [linelength,bezugsh-zeilenh*4,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+            drawing.add(dxf.polyline([[linelength,zSohleSchacht,0],[linelength,bezugsh-zeilenh*len(sZeilen),0]], color=7, layer="Laengs_Legende"))
+
+            # Endpunkt der Haltung
+           
+            pGelaende.append([linelength,zDeckelSchacht,0])
+            pSohle.append([linelength-zSchachtbreite/2,zSohleU,0])
+            pScheitel.append([linelength-zSchachtbreite/2,zScheitelU,0])
+
+            drawing.add(dxf.polyline(pSohle, color=7, layer="Laengs_Haltung"))
+            drawing.add(dxf.polyline(pScheitel, color=7, layer="Laengs_Haltung"))
+            drawing.add(dxf.polyline(pGelaende, color=7, layer="Laengs_Gelaende"))
+
+            #Legende
+            for ze in range(0, len(sZeilen)+1):
+                drawing.add(dxf.polyline([[schriftX,bezugsh-zeilenh*ze-schrifth/2,0],[linelength-schriftX,bezugsh-zeilenh*ze-schrifth/2,0]], color=7, layer="Laengs_Legende"))
+
             drawing.save()
