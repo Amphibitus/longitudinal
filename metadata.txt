@@ -6,7 +6,7 @@
 name=longitudinal
 qgisMinimumVersion=3.0
 description=longitudinal along Lines and Points
-version=0.3
+version=0.6
 
 author=g3er@geoplaning.de
 email=g3er@geoplaning.de
@@ -25,7 +25,7 @@ hasProcessingProvider=no
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=longitudinal, section,  sewer, water, pipe,  python, plugin, qgis,Längsschnitt,  
+tags=longitudinal,section,sewer,water,pipe,python,plugin,qgis,dxf,Längsschnitt,Kanalkataster,Kanal
 
 homepage=https://github.com/Amphibitus/longitudinal/wiki
 category=Plugins
