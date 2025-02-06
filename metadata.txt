@@ -5,14 +5,16 @@
 [general]
 name=longitudinal
 qgisMinimumVersion=3.0
-description=longitudinal along Lines and Points
-version=0.6
+
+version=0.8
 
 author=g3er@geoplaning.de
 email=g3er@geoplaning.de
 
 
-about=Longitudinal
+about=longitudinal along Lines and Points
+description= longitudinal along Lines and Points
+
 
 tracker=https://github.com/Amphibitus/longitudinal/issues
 repository=https://github.com/Amphibitus/longitudinal
