@@ -1,7 +1,7 @@
 # 📈 QGIS-Plugin: Longitudinal
 
 ![QGIS Version](https://img.shields.io/badge/QGIS-3.x-green.svg)
-![Version](https://img.shields.io/badge/Version-0.8-blue.svg)
+![Version](https://img.shields.io/badge/Version-1.0-blue.svg)
 
 **Longitudinal** ist ein spezialisiertes QGIS-Werkzeug zur Erzeugung von Längsschnitten (Profilen) entlang von Linien- und Punktdaten. Es vereinfacht die Visualisierung von Höhenverläufen für Planer, Ingenieure und Vermesser.
 
