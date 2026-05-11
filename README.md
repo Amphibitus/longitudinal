@@ -4,84 +4,73 @@
 ![Status](https://img.shields.io/badge/Status-Experimental-yellow.svg)
 ![Version](https://img.shields.io/badge/Version-0.8-blue.svg)
 
-**Longitudinal** ist ein spezialisiertes QGIS-Werkzeug zur Erzeugung von Längsschnitten (Profilen) entlang von Linien- und Punktdaten. Ideal für die Visualisierung von Höhenverläufen, Trassierungen oder Leitungsverläufen.
+**Longitudinal** ist ein spezialisiertes QGIS-Werkzeug zur Erzeugung von Längsschnitten (Profilen) entlang von Linien- und Punktdaten. Es vereinfacht die Visualisierung von Höhenverläufen für Planer, Ingenieure und Vermesser.
 
 ---
 
 ## 📖 Überblick
 
-Das Plugin ermöglicht es, Höhendaten entlang einer definierten Achse (Linie) auszuwerten und grafisch darzustellen. Es wurde entwickelt, um Profile effizient und direkt innerhalb der QGIS-Umgebung zu generieren.
+Das Plugin generiert präzise Höhenprofile direkt aus deinen GIS-Daten. Ein besonderes Highlight ist die Export-Schnittstelle, die den Sprung vom GIS in die CAD-Welt ermöglicht.
 
-* **Kategorie:** Vermessung / Analyse / Wasserbau
+* **Entwickler:** Gerd Dreier (geoplaning GmbH) / [Amphibitus](https://github.com/Amphibitus)
+* **Kategorie:** Ingenieurbau / Wasserwirtschaft / Vermessung
+* **CAD-Anbindung:** Integrierter **DXF-Export**.
+
+---
+
+## 🖼️ Plugin-Icons & Funktionen
+
+Die folgenden Symbole steuern die Kernfunktionen des Plugins (zu finden im `/icons` Ordner):
+
+| Icon | Name | Funktion |
+| :---: | :--- | :--- |
+| <img src="icons/longitudinal.png" width="32"> | **Main** | Startet das Hauptfenster für die Längsschnitt-Berechnung. |
+| <img src="icons/lines.png" width="32"> | **Lines** | Auswahl und Management der Achslinien (Trassen). |
+| <img src="icons/points.png" width="32"> | **Points** | Einbeziehung von Punktdaten (z.B. Schächte oder Messpunkte). |
+| <img src="icons/mActionOptions.png" width="32"> | **Options** | Einstellungen für die Profildarstellung und Überhöhung. |
+| <img src="icons/mActionHelp.png" width="32"> | **Help** | Öffnet die lokale Hilfe oder das Online-Wiki. |
+
+---
+
+## ✨ Features
+
+* **Profilauswertung:** Erzeugt Längsschnitte basierend auf Liniengeometrien und Punkt-Layern.
+* **💾 DXF-Export:** Exportiere deinen fertigen Längsschnitt als **DXF-Datei** zur nahtlosen Weiterverarbeitung in AutoCAD, BricsCAD oder Civil 3D.
+* **Zweite Höhenlinie:** Unterstützung für eine zusätzliche Referenzlinie (z. B. Gelände-Oberkante vs. Rohr-Sohle).
+* **Dynamische Höhen (v0.8):** Die Höhe der zweiten Profillinie kann interaktiv im Dialog angepasst werden.
+* **Skalierbarkeit:** Unterstützung für verschiedene Maßstäbe und vertikale Überhöhungen.
 
 ---
 
 ## 🛠 Installation
 
-### Der einfache Weg (Empfohlen)
-1. Öffne **QGIS**.
-2. Gehe im Menü auf **Erweiterungen** > **Erweiterungen verwalten und installieren...**.
-3. Suche im Reiter "Alle" nach **"Longitudinal"**.
-4. Klicke auf **Erweiterung installieren**.
-   *(Hinweis: Da das Plugin teils als "Experimental" markiert ist, stelle sicher, dass in den Einstellungen "Auch experimentelle Erweiterungen anzeigen" aktiviert ist.)*
+### Über QGIS (Empfohlen)
+1. Öffne den QGIS **Erweiterungen-Manager**.
+2. Suche nach **"Longitudinal"**.
+3. Klicke auf **Installieren**.
+   *(Wichtig: Stelle sicher, dass in den Einstellungen "Auch experimentelle Erweiterungen anzeigen" aktiviert ist.)*
 
-### Manuelle Installation (für Entwickler)
-Falls du die neueste Beta-Version direkt von GitHub nutzen möchtest:
-1. Lade das Repository als ZIP herunter.
-2. Entpacke den Inhalt in deinen QGIS-Plugin-Ordner:
-   `%AppData%\Roaming\QGIS\QGIS3\profiles\default\python\plugins` (Windows)
-3. Starte QGIS neu und aktiviere das Plugin im Erweiterungen-Manager.
+### Manuelle Installation
+1. Lade dieses Repository als ZIP herunter.
+2. Entpacke es in deinen Plugin-Ordner (meist unter `%AppData%\Roaming\QGIS\QGIS3\profiles\default\python\plugins`).
+3. Starte QGIS neu.
 
 ---
 
-## ✨ Features
+## 🚀 Workflow in Kürze
 
-* **Profilauswertung:** Erstellt Längsschnitte basierend auf Liniengeometrien und zugehörigen Punkten.
-* **Zweite Höhenlinie:** Unterstützung für eine zweite Referenzlinie (z.B. Gelände vs. Sohle).
-* **Dynamische Höhen:** Die Höhe der zweiten Profillinie kann direkt im Dialog angepasst werden (neu in v0.8).
-* **Interaktive Grafik:** Schnelle Visualisierung der vertikalen Geometrie.
-
----
-
-## 🚀 Kurzanleitung
-
-1. Wähle den **Linienlayer** (Achse) in QGIS aus.
-2. Definiere die Quelllayer für die **Höhendaten** (z.B. Punktlayer mit Z-Werten).
-3. Öffne das Longitudinal-Fenster, um die Grafik zu generieren.
-4. Nutze die Einstellungen, um Skalierung und Beschriftung anzupassen.
+1. **Achse wählen:** Markiere den Linienlayer, der den Verlauf deines Profils definiert.
+2. **Datenquellen:** Wähle die Layer aus, die die Z-Werte (Höhen) liefern.
+3. **Generieren:** Erzeuge die Profilgrafik in der Plugin-Vorschau.
+4. **Export:** Nutze den Export-Button, um eine **DXF-Datei** für CAD zu erstellen.
 
 ---
 
-## 🤝 Mitwirken & Support
+## 🤝 Support & Feedback
 
-Fehler gefunden oder Verbesserungsvorschläge?
-* Erstelle ein **Issue** hier auf GitHub.
-* Schau ins [Wiki](https://github.com/Amphibitus/longitudinal/wiki) für detaillierte Dokumentationen.
-
----
-*Entwickelt von geoplaning GmbH – Präzise Profile direkt in QGIS.*# 📈 QGIS-Plugin: Longitudinal
-
-![QGIS Version](https://img.shields.io/badge/QGIS-3.x-green.svg)
-![Status](https://img.shields.io/badge/Status-Experimental-yellow.svg)
-![Version](https://img.shields.io/badge/Version-0.8-blue.svg)
-
-**Longitudinal** ist ein spezialisiertes QGIS-Werkzeug zur Erzeugung von Längsschnitten (Profilen) entlang von Linien- und Punktdaten. Es eignet sich hervorragend für die Visualisierung von Höhenverläufen, Trassierungen oder Leitungsverläufen direkt in QGIS.
+Fehler gefunden? Ideen für neue Features? 
+* Erstelle ein **Issue** direkt hier im [GitHub-Repository](https://github.com/Amphibitus/longitudinal/issues).
+* Besuche das [Wiki](https://github.com/Amphibitus/longitudinal/wiki) für weitere Details.
 
 ---
-
-## ✨ Features
-
-* **Profilauswertung:** Erstellt Längsschnitte basierend auf Liniengeometrien und zugehörigen Punkten.
-* **Zweite Höhenlinie:** Unterstützung für eine zweite Höhenlinie (z.B. Gelände vs. Sohle/Rohroberkante).
-* **Dynamische Anpassung:** Die Höhe der zweiten Profillinie kann direkt im Tool angepasst werden (neu in v0.8).
-* **Flexibilität:** Funktioniert sowohl mit Punktwolken/Punkten als auch mit interpolierten Linendaten.
-* **Integration:** Nahtlose Arbeit innerhalb der QGIS-Oberfläche.
-
----
-
-## 🚀 Installation & Nutzung
-
-### Installation
-1. Lade das Repository als ZIP herunter oder klone es in deinen QGIS Plugin-Ordner:
-   ```bash
-   git clone [https://github.com/Amphibitus/longitudinal.git](https://github.com/Amphibitus/longitudinal.git)
+*Entwickelt von geoplaning GmbH – Engineering-Tools für QGIS.*
