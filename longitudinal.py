@@ -250,7 +250,10 @@ class longitudinal:
 
             # show the dockwidget
             # TODO: fix to allow choice of dock location
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
+            
+            # PyQt6 / PySide6 Syntax
+            self.iface.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.dockwidget)
+
             self.dockwidget.show()
             
 

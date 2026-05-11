@@ -5,8 +5,9 @@
 [general]
 name=longitudinal
 qgisMinimumVersion=3.0
+qgisMaximumVersion=4.99
 
-version=0.8
+version=1.0
 
 author=g3er@geoplaning.de
 email=g3er@geoplaning.de
@@ -33,7 +34,7 @@ homepage=https://github.com/Amphibitus/longitudinal/wiki
 category=Plugins
 icon=icon.png
 # experimental flag
-experimental=True
+experimental=false
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False

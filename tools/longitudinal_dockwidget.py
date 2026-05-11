@@ -127,6 +127,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
          
         self.uCopytoClip.clicked.connect(self.copyClipboard)
         self.uCopytoDXF.clicked.connect(self.outDXF)
+        self.uChangeHight.clicked.connect(self.changeHight)
+
 
         self.manageGui()
 
@@ -173,7 +175,9 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.uZfield1.setCurrentText(settings.value('/longitudinal/zField1'))
         self.uZfield2.setCurrentText(settings.value('/longitudinal/zField2'))
-        
+        self.uZfield3.setCurrentText(settings.value('/longitudinal/zField3'))
+        self.uZfield4.setCurrentText(settings.value('/longitudinal/zField4'))
+
         self.uZfieldP1.setCurrentText(settings.value('/longitudinal/zFieldP1'))
         self.uZfieldP2.setCurrentText(settings.value('/longitudinal/zFieldP2'))
 
@@ -202,6 +206,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # print('reload fields')
         self.uZfield1.clear()
         self.uZfield2.clear()
+        self.uZfield3.clear()
+        self.uZfield4.clear()
         self.uDiameter.clear()
         self.uLineID.clear()
 
@@ -211,6 +217,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
            
             self.uZfield1.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
             self.uZfield2.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
+            self.uZfield3.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
+            self.uZfield4.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
             self.uDiameter.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double]))
             self.uLineID.addItems(gpiutils.getFieldNames(line_layer, [QVariant.Int, QVariant.Double, 10]))# 10 is for string
             
@@ -267,6 +275,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         
         zField1 = self.uZfield1.currentText()
         zField2 = self.uZfield2.currentText()
+        zField3 = self.uZfield3.currentText()
+        zField4 = self.uZfield4.currentText()
         zFieldP1 = self.uZfieldP1.currentText()
         zFieldP2 = self.uZfieldP2.currentText()
         uDiameter = self.uDiameter.currentText()
@@ -281,6 +291,9 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         settings.setValue('/longitudinal/zField1',zField1)
         settings.setValue('/longitudinal/zField2',zField2)
+        settings.setValue('/longitudinal/zField3',zField3)
+        settings.setValue('/longitudinal/zField4',zField4)
+        
         settings.setValue('/longitudinal/zFieldP1',zFieldP1)
         settings.setValue('/longitudinal/zFieldP2',zFieldP2)
         settings.setValue('/longitudinal/uDiameter',uDiameter)
@@ -331,6 +344,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         selfeatP=[]
         selfpointFeatureList=[]
+
         for lineFeature in lineFeatureList:
             selP = gpiutils.selectPointFeaturefromlineFeature(LineLayer,lineFeature,PointLayer,float(self.spinBoxTol.value()))                
             if selP[0] :
@@ -377,6 +391,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         lineList = []
         zListSohle = []
+        zListWsp = []
         zListScheitel = []
 
         zminList = []
@@ -406,6 +421,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 zRohrbreite =1  
 
             zListSohle.append(lineFeature[zField1])
+            zListWsp.append(lineFeature[zField3])
             zListScheitel.append(lineFeature[zField1]+zRohrbreite/1000)
 
             selpoint=PointLayer.getFeature(selfeatP[lfdnr])
@@ -447,6 +463,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             distList.append(round(linelength,3)-zSchachtbreite/2)
 
             zListSohle.append(lineFeature[zField2])
+            zListWsp.append(lineFeature[zField4])
+
             zListScheitel.append(lineFeature[zField2]+zRohrbreite/1000)
             
             selpoint=PointLayer.getFeature(selfeatP[lfdnr+1])
@@ -473,7 +491,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             lfdnr+=1
 
 
-
+        self.uGesamtLaenge.setText('Length selecteds[m]: '+ str(round(linelength,2)))
+        
         zmin= round(min(zListSohle),0)-1
         anzListe=   len(zListSohle)    
         zminList=[zmin]*anzListe
@@ -481,40 +500,42 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         for i in range(0,anzListe,2):
             zminList[i]=zListSohle[i]
 
-        self.values = [distList, zListSohle, zListScheitel, zListGelaende, distListSchacht, zListSchacht,pointIdList,zminList]
+        self.values = [distList, zListSohle,zListScheitel, zListGelaende, zListWsp, distListSchacht, zListSchacht,pointIdList,zminList]
         self.refreshPlot()
         self.uCopytoClip.setEnabled(True)
         self.uCopytoDXF.setEnabled(True)
-        
-
+        self.uChangeHight.setEnabled(True)
 
     def refreshPlot(self):
         self.axes.clear()
 
         if self.values is None:
             return
-        l4, = self.axes.plot(np.array(self.values[4]),np.array(self.values[5]),label = 'Schacht')
+        l4, = self.axes.plot(np.array(self.values[5]),np.array(self.values[6]),label = 'Schacht')
         l1, = self.axes.plot(np.array(self.values[0]),np.array(self.values[1]),label = 'Sohle')
         l2, = self.axes.plot(np.array(self.values[0]),np.array(self.values[2]),label = 'Scheitel')
         l3, = self.axes.plot(np.array(self.values[0]),np.array(self.values[3]),label = 'Gelaende')
-        
-        l4.set_color('#0015ffff')
-        l1.set_color('#d028a6ff')
-        l2.set_color('#d028a6ff')
-        l3.set_color('#b27f4fff')
+        l5, = self.axes.plot(np.array(self.values[0]),np.array(self.values[4]),label = 'Wsp')
+
+
+        l5.set_color('#219ddbff') # Wasserspiegel
+        l4.set_color('#202020ff') # Schacht
+        l1.set_color('#d028a6ff') # Sohle
+        l2.set_color('#d028a6ff') #Scheitel
+        l3.set_color('#a87820ff') #Gelaende
 
         ###to draw labels from jorgealmerio 
         if self.uIDlabels.isChecked():
-            for i,linha in enumerate(np.array(self.values[6])):
+            for i,linha in enumerate(np.array(self.values[7])):
                 
                 if i%2 : #nur jede 2. Beschriftung
                     id=''
                 else:
-                    id=self.values[6][i]
+                    id=self.values[7][i]
 
                 dist=self.values[0][i]
                 z=self.values[1][i]
-                self.axes.annotate(id,(dist,z),fontsize=7, rotation=00,horizontalalignment='left', verticalalignment='top' )
+                self.axes.annotate(id,(dist,z),fontsize=7, rotation=00,horizontalalignment='right', verticalalignment='top' )
 
         if self.uIDlabels.isChecked():
             for i,linha in enumerate(np.array(self.values[3])):
@@ -633,6 +654,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #self.values = [distList, zListSohle, zListScheitel, zListGelaende, distListSchacht, zListSchacht,pointIdList,zminList]
         zField1 = self.uZfield1.currentText()
         zField2 = self.uZfield2.currentText()
+        zField3 = self.uZfield3.currentText()
+        zField4 = self.uZfield4.currentText()
         zFieldP1 = self.uZfieldP1.currentText()
         zFieldP2 = self.uZfieldP2.currentText()
         uDiameter = self.uDiameter.currentText()
@@ -665,9 +688,13 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             schriftX=-5
             linelength=schriftX
             
-            #sZeilen="Höhe geplant [müNN],Geländehöhe [müNN],Sohlhöhe [müNN],Tiefe [m],Länge [m],Gefälle [o/oo],Nennweite [mm],Name"
+            
             sZeilen = self.labLegend.text()
             sZeilen = sZeilen.split(',')
+
+            if len(sZeilen)!=9:
+                sZeilen="Höhe geplant [müNN],Geländehöhe [müNN],Wasserspiegellage [müNN],Sohlhöhe [müNN],Tiefe [m],Länge [m],Gefälle [o/oo],Nennweite [mm],Name"
+                sZeilen = sZeilen.split(',')
 
 
             lineFeature=self.lineFeatureList[len(self.lineFeatureList)-1]
@@ -682,6 +709,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             pGelaende=[]
             pSchacht=[]
             pSohle=[]
+            pWsp=[]
             pScheitel=[]
 
             ###to draw 
@@ -728,6 +756,8 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     zRohrbreite =1  
 
                 zSohleO=round(lineFeature[zField1],2)
+                zWspO=round(lineFeature[zField3],2)
+                zWspU=round(lineFeature[zField4],2)
                 zScheitelO=round(lineFeature[zField1]+zRohrbreite/1000,2)
                 zSohleU=round(lineFeature[zField2],2)
                 zScheitelU=round(lineFeature[zField2]+zRohrbreite/1000,2)
@@ -740,20 +770,21 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 pGelaende.append([linelength,zDeckelSchacht,0])
 
                 pSohle.append([linelength+zSchachtbreite/2,zSohleO,0])
+                pWsp.append([linelength+zSchachtbreite/2,zWspO,0])
                 pScheitel.append([linelength+zSchachtbreite/2,zScheitelO,0])
 
 
                 # Legende
                 drawing.add(dxf.text(zDeckelSchacht,        [linelength,bezugsh-zeilenh*1,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
                 drawing.add(dxf.text(zDeckelSchacht,        [linelength,bezugsh-zeilenh*2,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
-                drawing.add(dxf.text(zSohleSchacht,         [linelength,bezugsh-zeilenh*3,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
-                drawing.add(dxf.text(tiefe,                 [linelength,bezugsh-zeilenh*4,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
-                drawing.add(dxf.text(laenge,                [linelength+laenge/2,bezugsh-zeilenh*5,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
-                drawing.add(dxf.text(gefaelle,              [linelength+laenge/2,bezugsh-zeilenh*6,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
-                drawing.add(dxf.text(zRohrbreite,           [linelength+laenge/2,bezugsh-zeilenh*7,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
-                drawing.add(dxf.text(zName,                 [linelength+laenge/2,bezugsh-zeilenh*8,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
-                #drawing.add(dxf.text(zNameSchacht,          [linelength+laenge/2,zDeckelSchacht,0],schrifth,color=7,rotation=0, layer="Laengs_Schacht"))
-
+                drawing.add(dxf.text(zWspO,                 [linelength,bezugsh-zeilenh*3,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(zSohleSchacht,         [linelength,bezugsh-zeilenh*4,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(tiefe,                 [linelength,bezugsh-zeilenh*5,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(laenge,                [linelength+laenge/2,bezugsh-zeilenh*6,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(gefaelle,              [linelength+laenge/2,bezugsh-zeilenh*7,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(zRohrbreite,           [linelength+laenge/2,bezugsh-zeilenh*8,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+                drawing.add(dxf.text(zName,                 [linelength+laenge/2,bezugsh-zeilenh*9,0],schrifth,color=7,rotation=0, layer="Laengs_Legende"))
+              
                 #Legende senkrecht
                 drawing.add(dxf.polyline([[linelength,zSohleSchacht,0],[linelength,bezugsh-zeilenh*len(sZeilen),0]], color=7, layer="Laengs_Legende"))
 
@@ -765,6 +796,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     return
 
                 pSohle.append([linelength-zSchachtbreite/2,zSohleU,0])
+                pWsp.append([linelength-zSchachtbreite/2,zWspU,0])
                 pScheitel.append([linelength-zSchachtbreite/2,zScheitelU,0])
                 
                 lfdnr+=1
@@ -780,7 +812,7 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             zDeckelSchacht=pointFeature[zFieldP1]
             zSohleSchacht=pointFeature[zFieldP2]
             tiefe=round(zDeckelSchacht-zSohleSchacht,2)
-            zNameSchacht= lineFeature[LineID]
+            zNameSchacht= pointFeature[PointID]
 
             pSchacht.append([linelength-zSchachtbreite/2,zDeckelSchacht,0])
             pSchacht.append([linelength-zSchachtbreite/2,zSohleSchacht,0])
@@ -804,9 +836,11 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
            
             pGelaende.append([linelength,zDeckelSchacht,0])
             pSohle.append([linelength-zSchachtbreite/2,zSohleU,0])
+            pWsp.append([linelength-zSchachtbreite/2,zWspU,0])
             pScheitel.append([linelength-zSchachtbreite/2,zScheitelU,0])
 
             drawing.add(dxf.polyline(pSohle, color=7, layer="Laengs_Haltung"))
+            drawing.add(dxf.polyline(pWsp, color=7, layer="Laengs_Wsp"))
             drawing.add(dxf.polyline(pScheitel, color=7, layer="Laengs_Haltung"))
             drawing.add(dxf.polyline(pGelaende, color=7, layer="Laengs_Gelaende"))
 
@@ -815,3 +849,120 @@ class longitudinalDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 drawing.add(dxf.polyline([[schriftX,bezugsh-zeilenh*ze-schrifth/2,0],[linelength-schriftX,bezugsh-zeilenh*ze-schrifth/2,0]], color=7, layer="Laengs_Legende"))
 
             drawing.save()
+
+
+    def changeHight(self):
+
+        zField1 = self.uZfield1.currentText()
+        zField2 = self.uZfield2.currentText()
+        zField3 = self.uZfield3.currentText()
+        zFieldP1 = self.uZfieldP1.currentText()
+        zFieldP2 = self.uZfieldP2.currentText()
+
+
+
+        # Wenn der Startschacht keine Hoehen hat
+        if self.uLineLayer.currentText() == '':
+            QMessageBox.warning(self,'Warning','No initial height available')
+            self.tabWidget.setCurrentIndex(1)
+            return
+ 
+        linelength=0
+        lfdnr =0
+        for lineFeature in self.lineFeatureList:
+            lineGeom = lineFeature.geometry()
+            laenge=round(lineGeom.length(),2)
+            #GesamtLaenge 
+            try:
+                linelength+=laenge
+            except:
+                QMessageBox.warning(self,'Warning','No length from geometry')
+                return
+
+            lfdnr+=1
+
+        laengeGesamt=linelength
+
+
+        anzSchaechte=len(self.pointFeatureList)
+
+        #StartSchacht waehlen
+        pointFeature= self.pointFeatureList[0]
+        startDeckelSchacht=round(pointFeature[zFieldP1],2)
+        startSohleSchacht=round(pointFeature[zFieldP2],2)
+
+        pointFeature= self.pointFeatureList[anzSchaechte-1]
+        endDeckelSchacht=round(pointFeature[zFieldP1],2)
+        endSohleSchacht=round(pointFeature[zFieldP2],2)
+
+
+        # Wenn der Startschacht keine Hoehen hat
+        if startSohleSchacht==0 or endSohleSchacht==0 or startDeckelSchacht==0 or endDeckelSchacht==0:
+            QMessageBox.warning(self,'Warning','No elevation in Start and End Pointlayer')
+            self.tabWidget.setCurrentIndex(1)
+            return    
+        
+        gefaelleDeckelNeu=(startDeckelSchacht-endDeckelSchacht)/laengeGesamt
+        gefaelleSohleNeu=(startSohleSchacht-endSohleSchacht)/laengeGesamt
+
+        self.labGefaelle.setText(str(round(gefaelleSohleNeu*1000,1)))
+
+
+
+        # Sohltiefen aendern!!!
+        buttonReply = QMessageBox.question(self, 'Change the elevation', "You are sure?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if buttonReply == QMessageBox.No:
+            self.tabWidget.setCurrentIndex(1)
+            return
+        
+        LineLayer = self.proj.mapLayersByName(self.uLineLayer.currentText())[0] 
+        PointLayer = self.proj.mapLayersByName(self.uPointLayer.currentText())[0] 
+
+        LineLayer.startEditing()
+        PointLayer.startEditing()
+   
+
+        linelength=0
+        lfdnr =0
+        
+        for lineFeature in self.lineFeatureList:
+            lineGeom = lineFeature.geometry()
+
+            
+            #Schacht oben waehlen
+            pointFeature= self.pointFeatureList[lfdnr]
+            
+            #Sohle
+            #pointFeature[zFieldP1]=startDeckelSchacht
+            pointFeature[zFieldP2]=startSohleSchacht
+            PointLayer.updateFeature(pointFeature)
+
+            #Haltung
+
+            laenge=round(lineGeom.length(),2)
+            lineFeature[zField1]=startSohleSchacht
+            lineFeature[zField2]=startSohleSchacht-laenge*gefaelleSohleNeu
+            LineLayer.updateFeature(lineFeature)
+
+
+            startDeckelSchacht=startDeckelSchacht-laenge*gefaelleDeckelNeu
+            startSohleSchacht=startSohleSchacht-laenge*gefaelleSohleNeu
+
+
+            
+
+            #naechster Schacht      
+            lfdnr+=1
+            pointFeature= self.pointFeatureList[lfdnr]
+
+            #Im Moment wird nur die Sohle nichzt der Deckel neu berechnet
+            #pointFeature[zFieldP1]=startDeckelSchacht
+
+            #Sohle 
+            pointFeature[zFieldP2]=startSohleSchacht
+            PointLayer.updateFeature(pointFeature)
+
+
+        #LineLayer.commitChanges()
+        #PointLayerr.commitChanges()
+    
